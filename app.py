@@ -3,18 +3,20 @@ import pandas as pd
 import plotly.express as px
 from streamlit_option_menu import option_menu
 
-# Cargar datos
+# ---------------------- CARGA DE DATOS ---------------------- #
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Catalogo_con_distritos.csv")
     df["AÑO"] = df["FECHA_UTC"].astype(str).str[:4]
     fecha_dt = pd.to_datetime(df["FECHA_UTC"].astype(str), format="%Y%m%d", errors="coerce")
-    df["FECHA_UTC_FORMAT"] = fecha_dt.dt.strftime("%d/%m/%Y")  # solo para visualización
+    df["FECHA"] = fecha_dt.dt.strftime("%d/%m/%Y")
+    df["HORA"] = df["HORA_UTC"].astype(str).str.zfill(6).str[:2]  # extrae las 2 primeras cifras (horas)
+    df["HORA"] = df["HORA"].astype(int)
     return df
 
 df = load_data()
 
-# Sidebar visual con íconos
+# ----------------------- MENÚ LATERAL ----------------------- #
 with st.sidebar:
     selected = option_menu(
         menu_title="",
@@ -26,7 +28,7 @@ with st.sidebar:
             "nav-link": {
                 "font-size": "16px",
                 "text-align": "left",
-                "margin": "5px",
+                "margin": "0px",
                 "color": "#ffffff"
             },
             "nav-link-selected": {
@@ -38,7 +40,7 @@ with st.sidebar:
         }
     )
 
-# VISTA 1 – PRESENTACIÓN
+# ------------------- PESTAÑA: PRESENTACIÓN ------------------ #
 if selected == "📘 Presentación": 
     st.title("🌍 Plataforma de Monitoreo Sísmico del Perú")
     st.markdown("""
@@ -49,7 +51,7 @@ if selected == "📘 Presentación":
     st.markdown(f"""
     Este conjunto de datos contiene **{len(df):,} registros sísmicos** ocurridos en el Perú.
 
-    - **Rango de fechas:** `{df["FECHA_UTC_FORMAT"].dropna().iloc[0]}` → `{df["FECHA_UTC_FORMAT"].dropna().iloc[-1]}`
+    - **Rango de fechas:** `{df["FECHA"].dropna().iloc[0]}` → `{df["FECHA"].dropna().iloc[-1]}`
     - **Columnas clave:** `MAGNITUD`, `PROFUNDIDAD`, `LATITUD`, `LONGITUD`, `DEPARTAMENTO`, `PROVINCIA`, `DISTRITO`
 
     El dataset permite analizar la frecuencia, magnitud y distribución geográfica de los sismos ocurridos a lo largo de más de 60 años en el país.
@@ -67,11 +69,8 @@ if selected == "📘 Presentación":
     - 🏗️ Diseñar **infraestructura sismo-resistente** y desarrollo urbano seguro.
     - 📊 Apoyar a investigadores, autoridades y comunidades en la **toma de decisiones basadas en datos**.
 
-    Esta plataforma busca **fomentar una cultura de prevención y resiliencia** ante los riesgos sísmicos en el Perú.
+    Esta plataforma busca brindar acceso abierto y comprensible a información clave sobre la sismicidad nacional, con el fin de fomentar una **cultura de prevención, investigación y resiliencia** frente a los riesgos naturales.
     """)
-
-    # Imagen ilustrativa (opcional, colocar archivo en carpeta 'images/')
-    #st.image("images/placas_tectonicas_peru.jpg", caption="Zonas sísmicas del Perú", use_column_width=True)
 
     st.subheader("📑 Vista Preliminar del Dataset")
     st.dataframe(df.iloc[:, :10].head(10))
@@ -81,9 +80,9 @@ if selected == "📘 Presentación":
         df.describe().T.drop("FECHA_CORTE", axis=0).style.format("{:.0f}", na_rep="")
     )
 
-    st.subheader("🔗 Fuentes de Datos y Créditos")
+    st.subheader("🔗 Fuentes de Datos")
     st.markdown("""
-    Este análisis se basa en el catálogo sísmico oficial publicado por el **Instituto Geofísico del Perú (IGP)**, que contiene información detallada sobre los eventos sísmicos registrados desde 1960 hasta la actualidad.
+    Este análisis se basa en el catálogo sísmico oficial publicado por el **Instituto Geofísico del Perú (IGP)**, que contiene información detallada sobre los eventos sísmicos registrados desde 1960 hasta 2023.
 
     #### 📁 Fuente del Dataset
     - **Catálogo Sísmico 1960–2023 – IGP**  
@@ -98,71 +97,81 @@ if selected == "📘 Presentación":
     - 🌍 **Perfil de Riesgo de Desastres – Perú (UNDRR)**  
     [https://www.undrr.org/publication/disaster-risk-profile-peru](https://www.undrr.org/publication/disaster-risk-profile-peru)
 
-    - 📈 **Reporte de Sismicidad Mensual – IGP**  
-    [https://www.igp.gob.pe/servicios/sismologia/reportes-de-sismicidad](https://www.igp.gob.pe/servicios/sismologia/reportes-de-sismicidad)
-
     - 🌐 **USGS – Terremotos: conceptos básicos**  
     [https://earthquake.usgs.gov/learn/kids/eqscience.php](https://earthquake.usgs.gov/learn/kids/eqscience.php)
                 
     #### 🛠️ Herramientas utilizadas
     - Visualización: **Streamlit** + **Plotly**
     - Procesamiento de datos: **Pandas**, **Python 3.12**
-    - Formato de app: Interfaz interactiva web orientada a exploración ciudadana y académica
-
-    Esta plataforma busca brindar acceso abierto y comprensible a información clave sobre la sismicidad nacional, con el fin de fomentar una **cultura de prevención, investigación y resiliencia** frente a los riesgos naturales.
     """)
 
+    st.subheader("👨‍💻 Elaborado por")
 
-# VISTA 2 – DASHBOARD
+    st.markdown("""
+    Esta plataforma fue desarrollada como una herramienta educativa e informativa de acceso abierto, 
+    combinando técnicas de ciencia de datos, visualización interactiva y fuentes oficiales del monitoreo sísmico en el Perú.
+
+    **Desarrolladores:**  
+    - **Mercedes Díaz Pichiule**  
+    Bachiller en Ingeniería Informática – Pontificia Universidad Católica del Perú
+
+    - **Ángel Mayta Coaguila**  
+    Ingeniero Civil - Universidad Nacional de San Agustín
+
+    - **Miguel Lescano Avalos**  
+    Bachiller en Ingeniería de Sistemas - Universidad Nacional de Ingeniería
+
+    - **Sun Ji Sánchez**  
+    Bachiller en Ingeniería Informática – Pontificia Universidad Católica del Perú
+
+    **Fecha de publicación:** Abril 2025  
+    **Ubicación:** Lima, Perú
+    """)
+
+# ------------------- PESTAÑA: DASHBOARD --------------------- #
 elif selected == "📊 Dashboard":
     st.title("📊 Dashboard Sísmico Interactivo")
 
-    st.subheader("🎛️ Filtros")
+    # Filtros
+    st.sidebar.subheader("🎛️ Filtros")
 
-    # Año completo en una fila
-    ano_min, ano_max = st.slider("Filtrar por año:", int(df["AÑO"].min()), int(df["AÑO"].max()), (2000, 2023))
+    # Filtro de año
+    ano_min, ano_max = st.sidebar.slider("Filtrar por año:", int(df["AÑO"].min()), int(df["AÑO"].max()), (2000, 2023))
 
-    # Fila: Departamento - Provincia - Distrito
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
+    # Filtros de ubicación
+    col1a, col1b = st.sidebar.columns(2)
+    with col1a:
         departamentos = sorted(df["DEPARTAMENTO"].dropna().unique())
         departamento_seleccionado = st.selectbox("Departamento", ["Todos"] + departamentos)
-
-    with col2:
+    with col1b:
         if departamento_seleccionado != "Todos":
             provincias = sorted(df[df["DEPARTAMENTO"] == departamento_seleccionado]["PROVINCIA"].dropna().unique())
         else:
             provincias = sorted(df["PROVINCIA"].dropna().unique())
-        provincia_seleccionada = st.selectbox("Provincia", ["Todos"] + list(provincias))
-
-    with col3:
+        provincia_seleccionada = st.selectbox("Provincia", ["Todos"] + provincias)
+    col2 = st.sidebar.container()
+    with col2:
         if provincia_seleccionada != "Todos":
             distritos = sorted(df[df["PROVINCIA"] == provincia_seleccionada]["DISTRITO"].dropna().unique())
         elif departamento_seleccionado != "Todos":
             distritos = sorted(df[df["DEPARTAMENTO"] == departamento_seleccionado]["DISTRITO"].dropna().unique())
         else:
             distritos = sorted(df["DISTRITO"].dropna().unique())
-        distrito_seleccionado = st.selectbox("Distrito", ["Todos"] + list(distritos))
+        distrito_seleccionado = st.selectbox("Distrito", ["Todos"] + distritos)
 
-    # Fila: Magnitud y profundidad
-    col4, col5 = st.columns(2)
-    with col4:
+    # Filtros de magnitud y profundidad
+    col3a, col3b = st.sidebar.columns(2)
+    with col3a:
         mag_min, mag_max = st.slider("Magnitud:", float(df["MAGNITUD"].min()), float(df["MAGNITUD"].max()), (5.0, 8.0))
+    with col3b:
+        prof_min, prof_max = st.slider("Profundidad (km):", int(df["PROFUNDIDAD"].min()), int(df["PROFUNDIDAD"].max()), (0, 600))
 
-    with col5:
-        depth_min, depth_max = st.slider("Profundidad (km):", int(df["PROFUNDIDAD"].min()), int(df["PROFUNDIDAD"].max()), (0, 600))
-
-    # Aplicar filtros al DataFrame
+    # Aplicación de filtros
     df_filtered = df[
-        (df["AÑO"].astype(int) >= ano_min) &
-        (df["AÑO"].astype(int) <= ano_max) &
-        (df["MAGNITUD"] >= mag_min) & 
-        (df["MAGNITUD"] <= mag_max) &
-        (df["PROFUNDIDAD"] >= depth_min) &
-        (df["PROFUNDIDAD"] <= depth_max)
+        df["AÑO"].astype(int).between(ano_min, ano_max) &
+        df["MAGNITUD"].between(mag_min, mag_max) &
+        df["PROFUNDIDAD"].between(prof_min, prof_max)
     ]
-
     if departamento_seleccionado != "Todos":
         df_filtered = df_filtered[df_filtered["DEPARTAMENTO"] == departamento_seleccionado]
     if provincia_seleccionada != "Todos":
@@ -170,12 +179,13 @@ elif selected == "📊 Dashboard":
     if distrito_seleccionado != "Todos":
         df_filtered = df_filtered[df_filtered["DISTRITO"] == distrito_seleccionado]
 
-
+    # Indicadores
     col1, col2, col3 = st.columns(3)
     col1.metric("Eventos", len(df_filtered))
     col2.metric("Magnitud Máxima", df_filtered["MAGNITUD"].max())
     col3.metric("Profundidad Promedio (km)", round(df_filtered["PROFUNDIDAD"].mean(), 1))
 
+    # Mapa de eventos sísmicos
     st.subheader("🗺️ Mapa de Eventos Sísmicos")
     fig_map = px.scatter_map(
         df_filtered,
@@ -187,14 +197,73 @@ elif selected == "📊 Dashboard":
         zoom=4,
         hover_name="DEPARTAMENTO",
         template="plotly",
-        hover_data=["PROFUNDIDAD"],
+        hover_data=["PROFUNDIDAD", "FECHA"],
+        color_continuous_scale=px.colors.sequential.Bluered,
     )
     st.plotly_chart(fig_map, use_container_width=True)
 
-    st.subheader("📉 Histograma de Magnitudes")
-    fig_hist = px.histogram(df_filtered, x="MAGNITUD", nbins=30)
-    st.plotly_chart(fig_hist, use_container_width=True)
+    # Crear las columnas para colocar los gráficos lado a lado
+    col1, col2 = st.columns(2)
 
-    st.subheader("📅 Evolución Anual de Sismos")
-    fig_ano = px.histogram(df_filtered, x="AÑO", title="Sismos por Año")
-    st.plotly_chart(fig_ano, use_container_width=True)
+    # Gráfico de línea de frecuencia de sismos por año
+    with col1:
+        st.markdown("##### 📊 Frecuencia de Sismos por Año")
+        sismos_por_anio = df_filtered.groupby("AÑO").size().reset_index(name="Número de Sismos")
+        fig4 = px.bar(
+            sismos_por_anio,
+            x="AÑO",
+            y="Número de Sismos",
+            labels={"AÑO": "Año", "Número de Sismos": "Número de sismos"},
+            color_discrete_sequence=["#9467bd"]
+        )
+        st.plotly_chart(fig4, use_container_width=True)
+
+    # Gráfico de línea de promedio de magnitud por año
+    with col2:
+        st.markdown("##### 📉 Promedio de Magnitud por Año")
+        avg_mag_per_year = df_filtered.groupby("AÑO")["MAGNITUD"].mean().reset_index()
+        fig5 = px.line(
+            avg_mag_per_year,
+            x="AÑO",
+            y="MAGNITUD",
+            labels={"AÑO": "Año", "MAGNITUD": "Promedio de magnitud"},
+            color_discrete_sequence=["#1f77b4"],
+        )
+        st.plotly_chart(fig5, use_container_width=True)
+
+    # Boxplot de magnitud por departamento
+    st.subheader("📦 Boxplot de Magnitud por Departamento")
+    fig6 = px.box(
+        df_filtered,
+        x="DEPARTAMENTO",
+        y="MAGNITUD",
+        labels={"DEPARTAMENTO": "Departamento", "MAGNITUD": "Magnitud"},
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig6.update_layout(xaxis_title="Departamento", yaxis_title="Magnitud")
+    st.plotly_chart(fig6, use_container_width=True)
+
+    # Gráfico de dispersión de magnitud vs profundidad
+    st.subheader("📉 Relación entre Magnitud y Profundidad")
+    fig2 = px.scatter(
+        df_filtered, 
+        x="MAGNITUD", 
+        y="PROFUNDIDAD",
+        labels={"MAGNITUD": "Magnitud", "PROFUNDIDAD": "Profundidad (km)"},
+        color_discrete_sequence=["#1f77b4"],
+        )
+    st.plotly_chart(fig2)
+
+    # Histograma de frecuencia de sismos por hora del día
+    st.subheader("⏰ Frecuencia de Sismos por Hora del Día")
+    df_hora = df_filtered["HORA"].value_counts().sort_index().reset_index()
+    df_hora.columns = ["Hora del día", "Cantidad de sismos"]
+    fig_hora = px.bar(
+        df_hora,
+        x="Hora del día",
+        y="Cantidad de sismos",
+        labels={"Hora del día": "Hora del día", "Cantidad de sismos": "Cantidad de sismos"},
+        color_discrete_sequence=["#17becf"]
+    )
+    fig_hora.update_layout(bargap=0.1, xaxis=dict(dtick=1))
+    st.plotly_chart(fig_hora, use_container_width=True)
