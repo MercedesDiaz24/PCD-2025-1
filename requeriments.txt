@@ -1,4 +1,6 @@
 streamlit
 pandas
-plotly
+plotly>=5.0.0
 streamlit-option-menu
+pip>=21.0
+setuptools>=58.0
