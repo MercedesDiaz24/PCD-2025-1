@@ -19,8 +19,8 @@ df = load_data()
 # ----------------------- MENÚ LATERAL ----------------------- #
 with st.sidebar:
     selected = option_menu(
-        menu_title="",
-        options=["📘 Presentación", "📊 Dashboard"],
+        menu_title="📈 Plataforma de Monitoreo Sísmico",
+        options=["📘 Inicio", "📊 Dashboard"],
         default_index=0,
         styles={
             "container": {"padding": "10px", "background-color": "#1E1E1E"},
@@ -37,17 +37,24 @@ with st.sidebar:
                 "font-weight": "bold",
                 "border-radius": "8px"
             },
+            "menu-title": {
+                "font-size": "24px",
+                "text-align": "center",
+                "color": "#ffffff",
+                "font-weight": "bold",
+                "background-image": "none",
+            }
         }
     )
 
-# ------------------- PESTAÑA: PRESENTACIÓN ------------------ #
-if selected == "📘 Presentación": 
+# ------------------- PESTAÑA: INICIO ------------------ #
+if selected == "📘 Inicio": 
     st.title("🌍 Plataforma de Monitoreo Sísmico del Perú")
     st.markdown("""
     _Un recurso interactivo para la exploración histórica y territorial de los eventos sísmicos en el país._
     """)
 
-    st.header("🧾 Descripción del Dataset")
+    st.header("🧾 Descripción del conjunto de datos")
     st.markdown(f"""
     Este conjunto de datos contiene **{len(df):,} registros sísmicos** ocurridos en el Perú.
 
@@ -72,7 +79,7 @@ if selected == "📘 Presentación":
     Esta plataforma busca brindar acceso abierto y comprensible a información clave sobre la sismicidad nacional, con el fin de fomentar una **cultura de prevención, investigación y resiliencia** frente a los riesgos naturales.
     """)
 
-    st.subheader("📑 Vista Preliminar del Dataset")
+    st.subheader("📑 Vista Preliminar del Conjunto de Datos")
     st.dataframe(df.iloc[:, :10].head(10))
 
     st.subheader("📈 Estadísticas Generales")
@@ -92,10 +99,10 @@ if selected == "📘 Presentación":
     La información contextual sobre la sismicidad y su impacto en el Perú ha sido elaborada con base en fuentes oficiales:
 
     - 📌 **Tectónica del Perú – IGP**  
-    [https://www.igp.gob.pe/servicios/sismologia/tectonica-del-peru](https://www.igp.gob.pe/servicios/sismologia/tectonica-del-peru)
+    [https://www.igp.gob.pe/](https://www.igp.gob.pe/)
 
     - 🌍 **Perfil de Riesgo de Desastres – Perú (UNDRR)**  
-    [https://www.undrr.org/publication/disaster-risk-profile-peru](https://www.undrr.org/publication/disaster-risk-profile-peru)
+    [https://www.undrr.org/](https://www.undrr.org/)
 
     - 🌐 **USGS – Terremotos: conceptos básicos**  
     [https://earthquake.usgs.gov/learn/kids/eqscience.php](https://earthquake.usgs.gov/learn/kids/eqscience.php)
@@ -180,10 +187,12 @@ elif selected == "📊 Dashboard":
         df_filtered = df_filtered[df_filtered["DISTRITO"] == distrito_seleccionado]
 
     # Indicadores
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
+
     col1.metric("Eventos", len(df_filtered))
     col2.metric("Magnitud Máxima", df_filtered["MAGNITUD"].max())
-    col3.metric("Profundidad Promedio (km)", round(df_filtered["PROFUNDIDAD"].mean(), 1))
+    col3.metric("Magnitud Promedio", round(df_filtered["MAGNITUD"].mean(), 1)) 
+    col4.metric("Profundidad Promedio (km)", round(df_filtered["PROFUNDIDAD"].mean(), 1))
 
     # Mapa de eventos sísmicos
     st.subheader("🗺️ Mapa de Eventos Sísmicos")
@@ -217,6 +226,8 @@ elif selected == "📊 Dashboard":
             color_discrete_sequence=["#9467bd"]
         )
         st.plotly_chart(fig4, use_container_width=True)
+        max_year = sismos_por_anio.loc[sismos_por_anio["Número de Sismos"].idxmax(), "AÑO"]
+        st.info(f"El año con más sismos fue **{max_year}**.")
 
     # Gráfico de línea de promedio de magnitud por año
     with col2:
@@ -230,9 +241,12 @@ elif selected == "📊 Dashboard":
             color_discrete_sequence=["#1f77b4"],
         )
         st.plotly_chart(fig5, use_container_width=True)
+        max_mag_year = avg_mag_per_year.loc[avg_mag_per_year["MAGNITUD"].idxmax(), "AÑO"]
+        max_mag_value = round(avg_mag_per_year["MAGNITUD"].max(), 2)
+        st.info(f"El año con el mayor promedio de magnitud fue **{max_mag_year}** con **{max_mag_value}**.")
 
     # Boxplot de magnitud por departamento
-    st.subheader("📦 Boxplot de Magnitud por Departamento")
+    st.subheader("📦 Magnitudes de sismos a lo largo del Perú")
     fig6 = px.box(
         df_filtered,
         x="DEPARTAMENTO",
@@ -242,6 +256,8 @@ elif selected == "📊 Dashboard":
     )
     fig6.update_layout(xaxis_title="Departamento", yaxis_title="Magnitud")
     st.plotly_chart(fig6, use_container_width=True)
+    dep_mayor_mag = df_filtered.groupby("DEPARTAMENTO")["MAGNITUD"].mean().idxmax()
+    st.info(f"El departamento con mayor magnitud promedio es **{dep_mayor_mag}**.")
 
     # Gráfico de dispersión de magnitud vs profundidad
     st.subheader("📉 Relación entre Magnitud y Profundidad")
@@ -249,10 +265,18 @@ elif selected == "📊 Dashboard":
         df_filtered, 
         x="MAGNITUD", 
         y="PROFUNDIDAD",
-        labels={"MAGNITUD": "Magnitud", "PROFUNDIDAD": "Profundidad (km)"},
+        labels={"MAGNITUD": "Magnitud", "PROFUNDIDAD": "Profundidad (km)", "FECHA": "Fecha", "DEPARTAMENTO": "Departamento"},
         color_discrete_sequence=["#1f77b4"],
-        )
+        hover_data={
+        "FECHA": True,        
+        "DEPARTAMENTO": True, 
+        "MAGNITUD": True,     
+        "PROFUNDIDAD": True  
+        }
+    )
     st.plotly_chart(fig2)
+    profundidad_media = round(df_filtered["PROFUNDIDAD"].mean(), 1)
+    st.info(f"La profundidad promedio de los eventos analizados es de **{profundidad_media} km**.")
 
     # Histograma de frecuencia de sismos por hora del día
     st.subheader("⏰ Frecuencia de Sismos por Hora del Día")
@@ -267,3 +291,5 @@ elif selected == "📊 Dashboard":
     )
     fig_hora.update_layout(bargap=0.1, xaxis=dict(dtick=1))
     st.plotly_chart(fig_hora, use_container_width=True)
+    hora_mas_sismos = df_hora.loc[df_hora["Cantidad de sismos"].idxmax(), "Hora del día"]
+    st.info(f"La hora con más actividad sísmica fue alrededor de las **{hora_mas_sismos}:00 horas**.")
